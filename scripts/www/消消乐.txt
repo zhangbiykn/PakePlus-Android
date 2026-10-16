@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>水果消消乐</title>
+<title>消消乐闯关版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{
@@ -34,10 +34,7 @@ body{
   text-shadow:0 2px 4px rgba(0,0,0,0.15);
 }
 .fruit-decor{
-  display:flex;
-  gap:12px;
-  font-size:44px;
-  margin:10px 0;
+  display:flex;gap:12px;font-size:44px;margin:10px 0;
 }
 #startBtnBig{
   padding:16px 44px;font-size:22px;border-radius:99px;border:none;
@@ -48,7 +45,7 @@ body{
 #startBtnBig:active{
   transform:scale(0.96);
 }
-/* ========== 游戏面板（美化后的信息框） ========== */
+/* ========== 游戏面板（信息框） ========== */
 #panel{
   width:min(92vw,600px);
   margin-bottom:10px;
@@ -63,8 +60,8 @@ body{
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+  margin-bottom:10px;
 }
-
 .info-row span {
   background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,255,0.95));
   border: 1px solid rgba(255,255,255,0.8);
@@ -79,7 +76,6 @@ body{
   justify-content: space-between;
   align-items: center;
 }
-
 .info-row span span {
   background: none;
   border: none;
@@ -88,137 +84,162 @@ body{
   font-weight: 700;
   font-size: 17px;
 }
-#level {
-  color: #ffd93d;
+#level {color: #ffd93d;}
+#goal {color: #4d96ff;}
+#score {color: #ff6b6b;}
+#step {color: #6bcb77;}
+#timer {color: #c084fc;}
+#bestScore {color: #ff9e7d;}
+/* ========== 道具栏 ========== */
+#toolBar{
+  display:flex;gap:10px;margin-bottom:10px;
 }
-#goal {
-  color: #4d96ff;
+.tool-btn{
+  flex:1;padding:10px;border:none;border-radius:10px;font-size:16px;color:#fff;
 }
-#score {
-  color: #ff6b6b;
-}
-#step {
-  color: #6bcb77;
-}
-#timer {
-  color: #c084fc;
-}
-#bestScore {
-  color: #ff9e7d;
-}
+#bombBtn{background:linear-gradient(135deg,#e74c3c,#c0392b);}
+#hintBtn{background:linear-gradient(135deg,#f39c12,#e67e22);}
+.tool-btn:disabled{background:#999 !important;opacity:0.6;}
 /* ========== 游戏方块样式 ========== */
 #gameBox{
   display:grid;
   gap:5px;
+  position:relative;
 }
-/* 方块固定大小！不会改变尺寸 */
 .cell{
-  width:52px;
-  height:52px;
-  border-radius:12px;
+  width:52px;height:52px;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
   font-size:28px;
   background:linear-gradient(145deg,#ffffff,#e8edff);
   box-shadow:0 3px 6px #00000026;
   transition: transform 0.15s ease;
   border:1px solid rgba(255,255,255,0.6);
+  opacity:1;
 }
 .cell.selected{border:3px solid #ff4444;transform:scale(1.04);}
+.cell.hint{border:3px solid #ff0000 !important; box-shadow:0 0 8px #ff0000 !important;}
 .cell.pop{
   animation: popAnim 0.3s ease forwards;
+}
+/* 炸弹爆破动画 */
+.cell.bombPop{
+  animation: bombPopAnim 0.35s ease-out forwards;
+}
+/* 【开局滑入动画】从上落下弹性入场 */
+.cell.cell-appear{
+  animation: cellAppear 0.45s cubic-bezier(0.25,0.8,0.25,1) forwards;
+}
+@keyframes cellAppear {
+  0% {transform: translateY(-40px) scale(0.8); opacity:0;}
+  60% {transform: translateY(3px) scale(1.02); opacity:1;}
+  100% {transform: translateY(0) scale(1); opacity:1;}
+}
+@keyframes bombPopAnim {
+  0% {transform: scale(1); opacity:1;}
+  40% {transform: scale(1.3);}
+  100% {transform: scale(0); opacity:0;}
 }
 @keyframes popAnim {
   0% {transform: scale(1); opacity:1;}
   50% {transform: scale(1.25);}
   100% {transform: scale(0); opacity:0;}
 }
+/*===== 重排动画样式【保留】===== */
+#shuffleOverlay {
+  position: absolute;
+  top: 0;left: 0;width: 100%;height: 100%;
+  background: rgba(0, 0, 0, 0.35);border-radius: 12px;
+  display: none;align-items: center;justify-content: center;z-index: 10;
+}
+#shuffleOverlay span {
+  color: #fff;font-size: 16px;font-weight: bold;
+  background: rgba(0, 0, 0, 0.55);padding: 8px 16px;border-radius: 20px;
+}
+.cell.shuffle-out {animation: shuffleOut 0.25s ease forwards;}
+@keyframes shuffleOut {
+  0% {transform: scale(1); opacity: 1;}
+  100% {transform: scale(0.6); opacity: 0;}
+}
+.cell.shuffle-in {animation: shuffleIn 0.35s ease forwards;}
+@keyframes shuffleIn {
+  0% {transform: translateY(-30px) scale(0.8); opacity: 0;}
+  60% {transform: translateY(5px) scale(1.05);}
+  100% {transform: translateY(0) scale(1); opacity: 1;}
+}
 #tip{margin-top:12px;font-size:19px;color:#fff;height:28px;text-align:center;font-weight:bold;text-shadow:0 1px 3px #0004;}
+
+/* ==========游戏结束弹窗 ========== */
 #resultBox{
-  background:rgba(255,255,255,0.94);
-  border-radius:14px;padding:16px;margin-top:12px;text-align:center;display:none;
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(255,255,255,0.96);border-radius:14px;padding:16px;
+  text-align:center;display:none;z-index:100;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
 }
 #resultBox h3{margin:0 0 8px;color:#222;}
-#resultBox p{margin:4px 0;color:#444;}
+#resultBox p{margin:4px 0;color:#444;white-space:pre-line;}
 #restartBtn{margin-top:10px;padding:12px 20px;font-size:17px;border:none;border-radius:10px;background:linear-gradient(135deg,#2b78e4,#529aff);color:white;box-shadow:0 3px 8px #0003;}
 
-/* ========== 【新增：过关奖章弹窗样式】 ========== */
-/* 遮罩层 */
+/* ========== 过关奖章弹窗样式 ========== */
 .win-mask{
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.55);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:999;
 }
-/* 奖章弹窗容器 */
 .win-modal{
-  background: #fff;
-  width: min(85vw,320px);
-  border-radius:20px;
-  padding:30px 20px;
-  text-align:center;
-  transform:scale(0.6);
-  opacity:0;
-  animation: modalPop 0.4s ease-out forwards;
+  background: #fff;width: min(85vw,320px);border-radius:20px;padding:30px 20px;text-align:center;
+  transform:scale(0.6);opacity:0;animation: modalPop 0.4s ease-out forwards;
 }
 @keyframes modalPop {
   0%{transform:scale(0.6);opacity:0;}
   70%{transform:scale(1.08);opacity:1;}
   100%{transform:scale(1);opacity:1;}
 }
-/* 金色奖章 */
-.medal-icon{
-  font-size:70px;
-  margin-bottom:12px;
-  animation: medalShine 1.2s ease-in-out infinite;
-}
+.medal-icon{font-size:70px;margin-bottom:12px;animation: medalShine 1.2s ease-in-out infinite;}
 @keyframes medalShine {
   0%{transform: rotate(-8deg);}
   50%{transform: rotate(8deg);}
   100%{transform: rotate(-8deg);}
 }
-/* 彩虹渐变过关文字 */
 .win-text{
-  font-size:26px;
-  font-weight:800;
+  font-size:26px;font-weight:800;
   background: linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#c084fc,#ff6b6b);
   background-size:300% 100%;
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  animation: gradientShift 3s linear infinite;
-  margin-bottom:10px;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation: gradientShift 3s linear infinite;margin-bottom:10px;
 }
 @keyframes gradientShift {
   0%{background-position:0% 0;}
   100%{background-position:300% 0;}
 }
-.win-count{
-  font-size:17px;
-  color:#555;
+.win-count{font-size:17px;color:#555;margin-bottom:16px;}
+#nextLvBtn{padding:10px 24px;font-size:16px;border:none;border-radius:99px;background:#4158D0;color:#fff;}
+
+/* 烟花画布铺满全屏 */
+#fireworkCanvas{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:9999;
 }
 </style>
 </head>
 <body>
+<canvas id="fireworkCanvas"></canvas>
+
 <!-- 过关奖章弹窗 -->
 <div class="win-mask" id="winMask">
   <div class="win-modal">
     <div class="medal-icon">🏅</div>
     <div class="win-text">恭喜过关！</div>
     <div class="win-count" id="winCountText">10秒后自动进入下一关</div>
+    <button id="nextLvBtn">立即下一关</button>
   </div>
 </div>
 
 <!-- ========== 【开始页面HTML】 ========== -->
 <div id="startWrap">
   <div class="fruit-decor">🍎🍊🍇</div>
-  <div class="start-title">水果消消乐</div>
+  <div class="start-title">消消乐闯关版</div>
   <div class="start-desc">交换水果，达成目标分数，挑战更高关卡</div>
-  <div class="start-desc">YKN</div>
   <div class="fruit-decor">🍓🍋🥝</div>
-  <button id="startBtnBig">🎮 开始游戏 🎮</button>
+  <button id="startBtnBig">🎮 开始游戏</button>
 </div>
 
 <div id="panel" style="display:none;">
@@ -234,8 +255,17 @@ body{
     <span>剩余时间：<span id="timer">90</span>秒</span>
     <span>最高分：<span id="bestScore">0</span></span>
   </div>
+  <div id="toolBar">
+    <button class="tool-btn" id="bombBtn">💣炸弹(<span id="bombCount">3</span>)</button>
+    <button class="tool-btn" id="hintBtn">💡提示(<span id="hintCount">3</span>)</button>
+  </div>
 </div>
-<div id="gameBox"></div>
+<!-- 游戏容器，内置重排遮罩 -->
+<div id="gameBox">
+  <div id="shuffleOverlay">
+    <span>重新排列中...</span>
+  </div>
+</div>
 <div id="tip"></div>
 
 <div id="resultBox">
@@ -245,122 +275,90 @@ body{
 </div>
 
 <script>
-let audioCtx = null;
-let bgmPlaying = false;
+// ========== 烟花粒子代码 ==========
+const canvas = document.getElementById('fireworkCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize",resizeCanvas);
+class Particle{
+  constructor(x,y,color){
+    this.x=x;this.y=y;
+    const angle = Math.random()*Math.PI*2;
+    const speed = Math.random()*4+2;
+    this.vx = Math.cos(angle)*speed;
+    this.vy = Math.sin(angle)*speed;
+    this.alpha = 1;
+    this.decay = 0.008 + Math.random()*0.01;
+    this.color = color;
+    this.size = Math.random()*3+1;
+  }
+  update(){
+    this.x += this.vx;
+    this.y += this.vy;
+    this.alpha -= this.decay;
+    this.vy +=0.05;
+  }
+  draw(){
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fillStyle=this.color;
+    ctx.restore();
+  }
+}
+function createFirework(){
+  const colors = ['#ff4444','#ffdd44','#44ff44','#4488ff','#ff44ff'];
+  const x = Math.random()*canvas.width;
+  const y = Math.random()*canvas.height*0.4;
+  const color = colors[Math.floor(Math.random()*colors.length)];
+  for(let i=0;i<80;i++){
+    particles.push(new Particle(x,y,color));
+  }
+}
+function animateFirework(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.update();
+    p.draw();
+    if(p.alpha <=0) particles.splice(i,1);
+  }
+  requestAnimationFrame(animateFirework);
+}
+animateFirework();
+async function launchFireworks(){
+  for(let i=0;i<6;i++){
+    createFirework();
+    await sleep(300);
+  }
+}
 
-// DOM新增获取弹窗元素
+let audioCtx = null;
+let bgmOscList = [];
+let bgmGain = null;
+let bgmPlaying = false;
+let bgmInterval = null;
+let isAnimating = false;
+let toolMode = null;
+
 const winMask = document.getElementById("winMask");
 const winCountText = document.getElementById("winCountText");
+const nextLvBtn = document.getElementById("nextLvBtn");
 const gameBox = document.getElementById('gameBox');
+const bombBtn = document.getElementById('bombBtn');
+const hintBtn = document.getElementById('hintBtn');
+const bombCountDom = document.getElementById('bombCount');
+const hintCountDom = document.getElementById('hintCount');
+const shuffleOverlay = document.getElementById("shuffleOverlay");
 
-// 初始化音频上下文
-function initAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-
-// 消除音效
-function playMatchSound(){
-  initAudio();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);gain.connect(audioCtx.destination);
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(660, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(980, audioCtx.currentTime + 0.15);
-  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-  osc.start();osc.stop(audioCtx.currentTime + 0.2);
-}
-
-// 过关胜利音效
-function playWinSound(){
-  initAudio();
-  const t = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);gain.connect(audioCtx.destination);
-  osc.type='sine';
-  osc.frequency.setValueAtTime(523,t);
-  osc.frequency.setValueAtTime(659,t+0.2);
-  osc.frequency.setValueAtTime(784,t+0.4);
-  gain.gain.setValueAtTime(0.25,t);
-  gain.gain.exponentialRampToValueAtTime(0.001,t+0.8);
-  osc.start();osc.stop(t+0.8);
-}
-
-// ========= 【新版消消乐风格BGM，音量0.14】 =========
-function startBGM(){
-  if(bgmPlaying) return;
-  initAudio();
-  const bgmGain = audioCtx.createGain();
-  bgmGain.gain.value = 0.14;
-  bgmGain.connect(audioCtx.destination);
-
-  const melody = [
-    523, 587, 659, 587,
-    523, 494, 523, 392,
-    523, 587, 659, 698,
-    659, 587, 523, 523
-  ];
-  let noteIndex = 0;
-  const beatTime = 0.32;
-
-  const playNote = ()=>{
-    if(!bgmPlaying) return;
-    const now = audioCtx.currentTime;
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.connect(g);
-    g.connect(bgmGain);
-    o.type = 'sine';
-    o.frequency.value = melody[noteIndex];
-    g.gain.setValueAtTime(0.12, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + beatTime * 0.85);
-    o.start(now);
-    o.stop(now + beatTime);
-    noteIndex = (noteIndex + 1) % melody.length;
-  };
-  bgmPlaying=true;
-  setInterval(playNote, beatTime * 1000);
-}
-function stopBGM(){
-  bgmPlaying=false;
-}
-
-//自动计算网格行列：方块固定52px+gap5px
-function getAutoGridConfig(){
-  const blockSize = 52 + 5;
-  const availWidth = document.body.clientWidth - 24;
-  const cols = Math.floor(availWidth / blockSize);
-  const rows = Math.floor((window.innerHeight - 320) / blockSize);
-  const baseRows = Math.max(4, rows);
-  const baseCols = Math.max(4, cols);
-  const totalCell = baseRows * baseCols;
-  // 核心：基础目标分数 × 关卡难度系数，向上取整
-  const baseTarget = totalCell * 12;
-  const levelFactor = Math.pow(1.15, level - 1);
-  const targetScore = Math.ceil(baseTarget * levelFactor);
-
-  return {
-    rows: baseRows,
-    cols: baseCols,
-    typeCount: Math.min(7, Math.floor((baseCols+baseRows)/2)),
-    time: 120,
-    step: totalCell * 2,
-    target: targetScore
-  };
-}
-const COLORS = ['🍎','🍐','🍊','🍇','🍓','🍋','🥝'];
-
-let grid = [];
-let selected = null;
-let score = 0;
-let remainStep = 0;
-let remainTime = 0;
-let timerId = null;
-let gameRunning = false;
-let level = 1;
-let bestScore = parseInt(localStorage.getItem("matchBestScore")) || 0;
+let bombCount = 3;
+let hintCount = 3;
 
 const scoreDom = document.getElementById('score');
 const stepDom = document.getElementById('step');
@@ -377,12 +375,138 @@ const resTitle = document.getElementById('resTitle');
 const resText = document.getElementById('resText');
 const restartBtn = document.getElementById('restartBtn');
 
+let grid = [];
+let selected = null;
+let score = 0;
+let remainStep = 0;
+let remainTime = 0;
+let timerId = null;
+let gameRunning = false;
+let level = 1;
+let bestScore = parseInt(localStorage.getItem("matchBestScore")) || 0;
+let gameConf = null;
+const COLORS = ['🍎','🍐','🍊','🍇','🍓','🍋','🥝'];
 bestDom.textContent = bestScore;
 
+// 音频
+function initAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playMatchSound(){
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);gain.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(660, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(980, audioCtx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+  osc.start();osc.stop(audioCtx.currentTime + 0.2);
+}
+function playWinSound(){
+  initAudio();
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);gain.connect(audioCtx.destination);
+  osc.type='sine';
+  osc.frequency.setValueAtTime(523,t);
+  osc.frequency.setValueAtTime(659,t+0.2);
+  osc.frequency.setValueAtTime(784,t+0.4);
+  gain.gain.setValueAtTime(0.25,t);
+  gain.gain.exponentialRampToValueAtTime(0.001,t+0.8);
+  osc.start();osc.stop(t+0.8);
+}
+function playBombSound(){
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);gain.connect(audioCtx.destination);
+  osc.type='triangle';
+  osc.frequency.setValueAtTime(220,audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(60,audioCtx.currentTime+0.3);
+  gain.gain.setValueAtTime(0.3,audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.35);
+  osc.start();osc.stop(audioCtx.currentTime+0.35);
+}
+
+function stopBGM(){
+  bgmPlaying=false;
+  if(bgmInterval){
+    clearInterval(bgmInterval);
+    bgmInterval=null;
+  }
+  bgmOscList.forEach(o=>{try{o.stop();}catch(e){}});
+  bgmOscList=[];
+}
+function startBGM(){
+  if(bgmPlaying) return;
+  initAudio();
+  bgmGain = audioCtx.createGain();
+  bgmGain.gain.value = 0.14;
+  bgmGain.connect(audioCtx.destination);
+  const melody = [
+    523, 587, 659, 587,
+    523, 494, 523, 392,
+    523, 587, 659, 698,
+    659, 587, 523, 523
+  ];
+  let noteIndex = 0;
+  const beatTime = 0.32;
+  function playNote(){
+    if(!bgmPlaying) return;
+    const now = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g);
+    g.connect(bgmGain);
+    o.type = 'sine';
+    o.frequency.value = melody[noteIndex];
+    g.gain.setValueAtTime(0.12, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + beatTime * 0.85);
+    o.start(now);
+    o.stop(now + beatTime);
+    bgmOscList.push(o);
+    noteIndex = (noteIndex + 1) % melody.length;
+  }
+  bgmPlaying=true;
+  bgmInterval = setInterval(playNote, beatTime * 1000);
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    stopBGM();
+  }else if(gameRunning){
+    startBGM();
+  }
+});
+window.addEventListener('beforeunload', ()=>{
+  stopBGM();
+});
+
+function getAutoGridConfig(){
+  const blockSize = 52 + 5;
+  const availWidth = document.body.clientWidth - 24;
+  const cols = Math.floor(availWidth / blockSize);
+  const baseRows = Math.max(4, Math.floor((window.innerHeight - 380) / blockSize));
+  const baseCols = Math.max(4, cols);
+  const totalCell = baseRows * baseCols;
+  const baseTarget = totalCell * 12;
+  const levelFactor = Math.pow(1.15, level - 1);
+  const targetScore = Math.ceil(baseTarget * levelFactor);
+  return {
+    rows: baseRows,
+    cols: baseCols,
+    typeCount: Math.min(7, Math.floor((baseCols+baseRows)/2)),
+    time: 120,
+    step: totalCell * 2,
+    target: targetScore
+  };
+}
 function randomItem(typeCount){
   return COLORS[Math.floor(Math.random()*typeCount)];
 }
-
 function initBoard(conf){
   grid = [];
   for(let y=0;y<conf.rows;y++){
@@ -393,24 +517,82 @@ function initBoard(conf){
     for(let y=0;y<conf.rows;y++)for(let x=0;x<conf.cols;x++) grid[y][x]=randomItem(conf.typeCount);
   }
 }
-
-function render(conf){
+// 渲染函数：清除旧动画class，防止残留
+function render(conf, hintPair=null, playAppearAnim=false){
   gameBox.style.gridTemplateColumns = `repeat(${conf.cols}, 52px)`;
   gameBox.innerHTML = '';
+  const overlayDom = document.createElement("div");
+  overlayDom.id = "shuffleOverlay";
+  overlayDom.innerHTML = "<span>重新排列中...</span>";
+  gameBox.appendChild(overlayDom);
+
   for(let y=0;y<conf.rows;y++){
     for(let x=0;x<conf.cols;x++){
       const div = document.createElement('div');
       div.className = 'cell';
+      // 清除动画残留class
+      div.classList.remove("cell-appear","pop","bombPop","shuffle-out","shuffle-in");
       if(selected && selected.x===x && selected.y===y) div.classList.add('selected');
+      if(hintPair){
+        if((hintPair[0].x === x && hintPair[0].y === y) || (hintPair[1].x === x && hintPair[1].y === y)){
+          div.classList.add('hint');
+        }
+      }
       div.textContent = grid[y][x];
       div.onclick = ()=>clickCell(x,y,conf);
       gameBox.appendChild(div);
     }
   }
+  // 开局滑入动画仅第一次开局启用
+  if(playAppearAnim){
+    const cellDomList = gameBox.querySelectorAll(".cell");
+    cellDomList.forEach((cell, idx)=>{
+      setTimeout(()=>{
+        cell.classList.add("cell-appear");
+      }, idx * 25);
+    })
+  }
 }
-
 async function clickCell(x,y,conf){
-  if(!gameRunning) return;
+  if(!gameRunning || isAnimating) return;
+  if(toolMode === 'bomb'){
+    isAnimating=true;
+    bombCount--;
+    bombCountDom.textContent=bombCount;
+    bombBtn.disabled = bombCount <=0;
+    playBombSound();
+    const bombCells = [];
+    for(let dy=-1;dy<=1;dy++){
+      for(let dx=-1;dx<=1;dx++){
+        const nx = x+dx;
+        const ny = y+dy;
+        if(nx>=0 && nx<conf.cols && ny>=0 && ny<conf.rows){
+          bombCells.push({nx,ny});
+        }
+      }
+    }
+    const cellDomList = gameBox.querySelectorAll(".cell");
+    bombCells.forEach(pos=>{
+      const idx = pos.ny * conf.cols + pos.nx;
+      cellDomList[idx].classList.add("bombPop");
+      score +=10;
+    });
+    scoreDom.textContent = score;
+    await sleep(350);
+    bombCells.forEach(pos=>{
+      grid[pos.ny][pos.nx]=null;
+    });
+    render(conf);
+    await dropAndFill(conf);
+    render(conf);
+    await processMatch(conf);
+    toolMode=null;
+    isAnimating=false;
+    checkGameOver(conf);
+    checkNoMove(conf);
+    tipDom.textContent="";
+    return;
+  }
   if(!selected){
     selected = {x,y};
     render(conf);
@@ -423,8 +605,11 @@ async function clickCell(x,y,conf){
       if(matchList.length>0){
         remainStep--;
         stepDom.textContent = remainStep;
+        isAnimating = true;
         await processMatch(conf);
+        isAnimating = false;
         checkGameOver(conf);
+        checkNoMove(conf);
       }else{
         [grid[y][x], grid[selected.y][selected.x]] = [grid[selected.y][selected.x], grid[y][x]];
       }
@@ -433,14 +618,28 @@ async function clickCell(x,y,conf){
     render(conf);
   }
 }
-
-function findMatches(conf){
+async function dropAndFill(conf){
+  for(let x=0;x<conf.cols;x++){
+    let ptr = conf.rows-1;
+    for(let y=conf.rows-1;y>=0;y--){
+      if(grid[y][x]!==null){
+        grid[ptr][x] = grid[y][x];
+        if(ptr!==y) grid[y][x]=null;
+        ptr--;
+      }
+    }
+    for(let y=ptr;y>=0;y--){
+      grid[y][x] = randomItem(conf.typeCount);
+    }
+  }
+}
+function findMatches(conf, g=grid){
   const matchSet = new Set();
   const {rows, cols} = conf;
   for(let y=0;y<rows;y++){
     for(let x=0;x<cols-2;x++){
-      const v = grid[y][x];
-      if(v && grid[y][x+1]===v && grid[y][x+2]===v){
+      const v = g[y][x];
+      if(v && g[y][x+1]===v && g[y][x+2]===v){
         matchSet.add(`${y},${x}`);
         matchSet.add(`${y},${x+1}`);
         matchSet.add(`${y},${x+2}`);
@@ -449,8 +648,8 @@ function findMatches(conf){
   }
   for(let x=0;x<cols;x++){
     for(let y=0;y<rows-2;y++){
-      const v = grid[y][x];
-      if(v && grid[y+1][x]===v && grid[y+2][x]===v){
+      const v = g[y][x];
+      if(v && g[y+1][x]===v && g[y+2][x]===v){
         matchSet.add(`${y},${x}`);
         matchSet.add(`${y+1},${x}`);
         matchSet.add(`${y+2},${x}`);
@@ -460,42 +659,83 @@ function findMatches(conf){
   return Array.from(matchSet).map(s=>{let [yy,xx]=s.split(',');return {y:+yy,x:+xx};});
 }
 
+function cloneBoard(g){
+  return g.map(r=>[...r]);
+}
+function findHintPair(conf){
+  const {rows, cols}=conf;
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      if(x+1 < cols){
+        const tempG = cloneBoard(grid);
+        [tempG[y][x], tempG[y][x+1]] = [tempG[y][x+1], tempG[y][x]];
+        if(findMatches(conf,tempG).length>0){
+          return [{x,y},{x:x+1,y}];
+        }
+      }
+      if(y+1 < rows){
+        const tempG = cloneBoard(grid);
+        [tempG[y][x], tempG[y+1][x]] = [tempG[y+1][x], tempG[y][x]];
+        if(findMatches(conf,tempG).length>0){
+          return [{x,y},{x,y:y+1}];
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function checkNoMove(conf){
+  const pair = findHintPair(conf);
+  if(!pair){
+    tipDom.textContent = "没有可消除水果，正在重新打乱！";
+    const overlay = document.getElementById("shuffleOverlay");
+    overlay.style.display = "flex";
+    const cells = gameBox.querySelectorAll(".cell");
+    cells.forEach(cell => {
+      cell.classList.add("shuffle-out");
+    });
+    await sleep(250);
+    initBoard(conf);
+    overlay.style.display = "none";
+    render(conf);
+    const newCells = gameBox.querySelectorAll(".cell");
+    newCells.forEach((cell, index) => {
+      setTimeout(() => {
+        cell.classList.add("shuffle-in");
+      }, index * 8);
+    });
+    await sleep(350);
+    const afterPair = findHintPair(conf);
+    if(!afterPair && gameRunning){
+      checkNoMove(conf);
+    }
+  }else{
+    tipDom.textContent = "";
+  }
+}
+
 async function processMatch(conf){
   let matchList = findMatches(conf);
   while(matchList.length>0){
     score += matchList.length * 10;
     scoreDom.textContent = score;
+    const cellDomList = gameBox.querySelectorAll(".cell");
     matchList.forEach(p=>{
-      const cellDom = gameBox.children[p.y*conf.cols + p.x];
+      const cellDom = cellDomList[p.y*conf.cols + p.x];
       if(cellDom) cellDom.classList.add('pop');
     });
     playMatchSound();
     await sleep(300);
     matchList.forEach(p=> grid[p.y][p.x]=null);
     render(conf);
-    await sleep(150);
-    //方块下落
-    for(let x=0;x<conf.cols;x++){
-      let ptr = conf.rows-1;
-      for(let y=conf.rows-1;y>=0;y--){
-        if(grid[y][x]!==null){
-          grid[ptr][x] = grid[y][x];
-          if(ptr!==y) grid[y][x]=null;
-          ptr--;
-        }
-      }
-      for(let y=ptr;y>=0;y--){
-        grid[y][x] = randomItem(conf.typeCount);
-      }
-    }
+    await dropAndFill(conf);
     render(conf);
     await sleep(150);
     matchList = findMatches(conf);
   }
 }
-
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
 function startTimer(){
   if(timerId) clearInterval(timerId);
   timerId = setInterval(()=>{
@@ -506,99 +746,130 @@ function startTimer(){
     }
   },1000);
 }
-
 function checkGameOver(conf){
   if(score >= conf.target){
     gameRunning = false;
     clearInterval(timerId);
+    stopBGM();
     playWinSound();
-    // 显示奖章弹窗
+    if(score > bestScore){
+      launchFireworks();
+    }
     winMask.style.display='flex';
     if(score>bestScore){
       bestScore = score;
       localStorage.setItem("matchBestScore",bestScore);
       bestDom.textContent = bestScore;
     }
-    //10秒倒计时自动下一关
     let countDown = 10;
     const autoTimer = setInterval(()=>{
       countDown--;
       winCountText.textContent=`${countDown}秒后自动进入下一关`;
       if(countDown<=0){
         clearInterval(autoTimer);
-        winMask.style.display='none';
-        level += 1;
-        startGame();
+        goNextLevel();
       }
     },1000);
+    nextLvBtn.onclick = ()=>{
+      clearInterval(autoTimer);
+      goNextLevel();
+    }
     return;
   }
   if(remainStep <=0){
     gameOver("步数用完！");
   }
 }
-
+function goNextLevel(){
+  winMask.style.display='none';
+  level += 1;
+  startGame();
+}
 function gameOver(msg){
   gameRunning = false;
   clearInterval(timerId);
   stopBGM();
-  tipDom.className="";
   tipDom.textContent = "";
   winMask.style.display="none";
   if(score>bestScore){
     bestScore = score;
     localStorage.setItem("matchBestScore",bestScore);
     bestDom.textContent = bestScore;
+    launchFireworks();
   }
-  //展示结算面板
   resultBox.style.display='block';
   resTitle.textContent = "游戏结束";
   resText.textContent = `${msg}\n本局得分：${score}\n🏆最高成就：${bestScore}`;
 }
-
 function startGame(){
-  const conf = getAutoGridConfig();
+  stopBGM();
+  gameConf = getAutoGridConfig();
   score = 0;
-  remainStep = conf.step;
-  remainTime = conf.time;
+  remainStep = gameConf.step;
+  remainTime = gameConf.time;
   selected = null;
-  tipDom.className="";
   tipDom.textContent = "";
   winMask.style.display="none";
+  isAnimating = false;
+  toolMode=null;
+  bombCount = 3;
+  hintCount = 3;
+  bombCountDom.textContent = bombCount;
+  hintCountDom.textContent = hintCount;
+  bombBtn.disabled=false;
+  hintBtn.disabled=false;
   scoreDom.textContent = score;
   stepDom.textContent = remainStep;
   timerDom.textContent = remainTime;
   levelDom.textContent = level;
-  goalDom.textContent = conf.target;
-  initBoard(conf);
-  render(conf);
+  goalDom.textContent = gameConf.target;
+  initBoard(gameConf);
+  render(gameConf, null, true);
   gameRunning = true;
   resultBox.style.display='none';
   startTimer();
   startBGM();
+  checkNoMove(gameConf);
 }
 
-//窗口尺寸变化，重新计算网格
+bombBtn.onclick = function(){
+  if(!gameRunning || isAnimating || bombCount<=0) return;
+  toolMode = "bomb";
+  tipDom.textContent="💣请点击任意水果释放炸弹";
+}
+hintBtn.onclick = async function(){
+  if(!gameRunning || isAnimating || hintCount<=0) return;
+  hintCount--;
+  hintCountDom.textContent=hintCount;
+  hintBtn.disabled = hintCount <=0;
+  const pair = findHintPair(gameConf);
+  if(!pair){
+    tipDom.textContent="暂无可消除";
+    return;
+  }
+  render(gameConf, pair);
+  tipDom.textContent="💡找到可交换位置";
+  await sleep(1800);
+  render(gameConf);
+  tipDom.textContent="";
+}
+
 window.addEventListener('resize', ()=>{
-  if(gameRunning){
-    const conf = getAutoGridConfig();
-    render(conf);
-    goalDom.textContent = conf.target;
+  if(gameRunning && gameConf){
+    render(gameConf);
   }
 });
-
-//点击开始游戏
 startBtnBig.onclick = function(){
   startWrap.style.display='none';
   panel.style.display='block';
+  initAudio();
   startGame();
 }
-
 restartBtn.onclick = function(){
   stopBGM();
   gameRunning = false;
+  isAnimating = false;
   clearInterval(timerId);
-  tipDom.className="";
   tipDom.textContent="";
   level = 1;
   resultBox.style.display='none';
