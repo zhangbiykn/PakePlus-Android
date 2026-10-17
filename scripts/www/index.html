@@ -1,201 +1,428 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧来访周期核验系统1.01</title>
-    <style>
-        *{box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
-        body{max-width:450px;margin:20px auto;padding:15px;}
-        .item{margin-bottom:12px;}
-        input{width:100%;padding:10px;font-size:16px;border:1px solid #ccc;border-radius:6px;}
-        .btn-group{display:flex;gap:8px;flex-wrap:wrap;}
-        button{flex:1;padding:12px;font-size:15px;border:none;border-radius:6px;background:#2b7cd3;color:white;cursor:pointer;min-width:100px;}
-        #btnSave{background:#009944;}
-        #btnDel{background:#dd3333;}
-        button:hover{opacity:0.9;}
-        #result{margin-top:15px;padding:12px;background:#f5f7fa;border-radius:6px;white-space:pre-wrap;line-height:1.6;}
-        input[type="file"]{display:none;}
-        .file-tip{font-size:13px;color:#666;margin-top:4px;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>智慧来访周期核验系统</title>
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Microsoft Yahei", system-ui, sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  max-width:460px;
+  margin:16px auto;
+  padding:14px;
+  background:linear-gradient(135deg,#3b5bdb,#b048c9,#ffc362);
+  min-height:100vh;
+}
+
+.wrap{
+  background:rgba(255,255,255,0.94);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 10px 28px rgba(0,0,0,0.16);
+}
+
+h2{
+  text-align:center;
+  margin-bottom:16px;
+  color:#222;
+  font-size:20px;
+}
+
+.item{
+  margin-bottom:15px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:bold;
+  color:#333;
+  font-size:15px;
+}
+
+input{
+  width:100%;
+  padding:11px;
+  font-size:16px;
+  border:1px solid #d2d2d2;
+  border-radius:10px;
+  background:#fff;
+}
+
+.btn-group{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+button{
+  flex:1;
+  min-width:110px;
+  padding:12px;
+  font-size:14.5px;
+  border:none;
+  border-radius:10px;
+  background:#3b5bdb;
+  color:#fff;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:active{
+  opacity:0.85;
+}
+
+button.del{background:#d63939;}
+button.secondary{background:#1ea876;}
+button.import{background:#9133e8;}
+button.export{background:#0283c6;}
+button:disabled{background:#aaaaaa; cursor:not-allowed;}
+
+#msg{
+  margin-top:14px;
+  padding:11px;
+  border-radius:10px;
+  font-weight:500;
+  min-height:46px;
+  line-height:1.5;
+  font-size:14px;
+}
+.success{background:#dcfce7;color:#156533;}
+.error{background:#fee2e2;color:#981b1b;}
+.info{background:#dbeafe;color:#1d40ae;}
+
+/* 记录弹窗 */
+.list-mask{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.58);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.list-modal{
+  background:#fff;
+  width:min(92vw,410px);
+  border-radius:18px;
+  padding:20px;
+  max-height:82vh;
+  display:flex;
+  flex-direction:column;
+}
+.list-modal h3{
+  margin:0 0 14px 0;
+  text-align:center;
+  color:#222;
+}
+.record-list{
+  flex:1;
+  overflow-y:auto;
+  margin-bottom:14px;
+}
+.record-item{
+  padding:9px 0;
+  border-bottom:1px solid #eee;
+  font-size:14.5px;
+  color:#333;
+}
+.close-list{
+  padding:12px;
+  background:#636363;
+  margin-top:4px;
+}
+
+#fileInput{display:none;}
+</style>
 </head>
 <body>
-    <h2>智慧来访周期核验系统1.01</h2>
-    <div class="item">
-        <input type="text" id="nameInput" placeholder="请输入来访人姓名（支持中文）">
-    </div>
-    <div class="item">
-        <input type="text" id="dateInput" placeholder="来访日期 YYYY-MM-DD">
-    </div>
-    <div class="btn-group">
-        <button onclick="checkVisit()">核验来访</button>
-        <button id="btnSave" onclick="saveVisit()">登记本次来访</button>
-        <button id="btnDel" onclick="deleteRecord()">删除该人记录</button>
-        <button onclick="document.getElementById('importFile').click()">批量导入</button>
-        <button onclick="batchExport()">批量导出</button>
-    </div>
-    <input type="file" id="importFile" accept=".txt" onchange="handleImport(this)">
-    <div class="file-tip">批量导入文件格式：姓名|2026-10-01，每行一条</div>
-    <div id="result">系统就绪，数据保存在浏览器本地</div>
+<div class="wrap">
+  <h2>智慧来访周期核验系统</h2>
+
+  <div class="item">
+    <label>来访人姓名</label>
+    <input id="nameInput" placeholder="请输入姓名">
+  </div>
+  <div class="item">
+    <label>来访日期（默认今日）</label>
+    <input id="dateInput" readonly>
+  </div>
+
+  <div class="btn-group">
+    <button id="checkBtn">核验来访</button>
+    <button id="addBtn">登记来访</button>
+    <button id="clearNameBtn">清空姓名</button>
+  </div>
+  <div class="btn-group">
+    <button class="del" id="delBtn">删除此人记录</button>
+    <button class="secondary" id="showListBtn">查看全部记录</button>
+  </div>
+  <div class="btn-group">
+    <button class="import" id="importBtn">批量导入</button>
+    <button class="export" id="exportBtn">批量导出</button>
+  </div>
+
+  <div id="msg"></div>
+</div>
+
+<div class="list-mask" id="listMask">
+  <div class="list-modal">
+    <h3>全部来访记录</h3>
+    <div class="record-list" id="recordListBox"></div>
+    <button class="close-list" id="closeListBtn">关闭</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json">
 
 <script>
-// 本地存储KEY
-const STORAGE_KEY = "visit_records_data";
-const DELETE_PASSWORD = "3893862"; // 删除记录密码
-let lastCheckResult = null; // 保存上次核验结果
+// ========= 系统配置 =========
+const DEL_PASSWORD = "3893862";
+const VISIT_INTERVAL_DAYS = 7;
+const STORAGE_KEY = "offlineVisitData";
 
-// 获取今日日期 YYYY-MM-DD
+let lastCheckedName = "";
+let isCheckedOk = false;
+
+const nameInput = document.getElementById('nameInput');
+const dateInput = document.getElementById('dateInput');
+const checkBtn = document.getElementById('checkBtn');
+const addBtn = document.getElementById('addBtn');
+const clearNameBtn = document.getElementById('clearNameBtn');
+const delBtn = document.getElementById('delBtn');
+const showListBtn = document.getElementById('showListBtn');
+const importBtn = document.getElementById('importBtn');
+const exportBtn = document.getElementById('exportBtn');
+const closeListBtn = document.getElementById('closeListBtn');
+const msgBox = document.getElementById('msg');
+const listMask = document.getElementById('listMask');
+const recordListBox = document.getElementById('recordListBox');
+const fileInput = document.getElementById('fileInput');
+
 function getTodayStr(){
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${day}`;
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+dateInput.value = getTodayStr();
+
+function loadLocalData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){
+    return [];
+  }
+}
+function saveLocalData(list){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
-// 页面加载完成，自动填入当日日期
-window.onload = function(){
-    document.getElementById("dateInput").value = getTodayStr();
+function safeDate(dStr){
+  const [y,m,day] = dStr.split("-").map(Number);
+  return new Date(y, m-1, day);
+}
+
+function isAllowVisit(lastDateStr, checkDateStr){
+  const last = safeDate(lastDateStr);
+  const now = safeDate(checkDateStr);
+  const diffDay = (now - last) / (1000 * 60 * 60 * 24);
+  return diffDay > VISIT_INTERVAL_DAYS;
+}
+
+function showMsg(text, type="info"){
+  msgBox.innerText = text;
+  msgBox.className = type;
+}
+
+checkBtn.onclick = function(){
+  const name = nameInput.value.trim();
+  if(!name){
+    showMsg("请输入来访人姓名","error");
+    isCheckedOk = false;
+    lastCheckedName = "";
+    return;
+  }
+  const list = loadLocalData();
+  const person = list.find(x => x.name === name);
+
+  lastCheckedName = name;
+  isCheckedOk = true;
+
+  if(!person){
+    showMsg("✅无历史来访记录，可以登记来访","success");
+  }else if(isAllowVisit(person.date, dateInput.value)){
+    showMsg(`✅上次来访：${person.date}，间隔已超${VISIT_INTERVAL_DAYS}天，可以登记来访`,"success");
+  }else{
+    showMsg(`❌上次来访：${person.date}，间隔不超${VISIT_INTERVAL_DAYS}天，不可再次来访`,"error");
+    isCheckedOk = false;
+  }
 };
 
-// 读取记录
-function loadRecords(){
-    const str = localStorage.getItem(STORAGE_KEY);
-    if(!str) return {};
-    return JSON.parse(str);
-}
-// 保存记录
-function saveRecords(records){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-}
+addBtn.onclick = function(){
+  const name = nameInput.value.trim();
+  if(!name){
+    showMsg("请输入来访人姓名","error");
+    return;
+  }
+  if(!isCheckedOk || lastCheckedName !== name){
+    showMsg("⚠️请先点击【核验来访】，核验通过后再登记来访","info");
+    return;
+  }
 
-// 【核验来访】仅查询，不保存数据
-function checkVisit(){
-    const name = document.getElementById("nameInput").value.trim();
-    const dateStr = document.getElementById("dateInput").value.trim();
-    const records = loadRecords();
-    const resultDom = document.getElementById("result");
-    lastCheckResult = null;
+  const visitDate = dateInput.value;
+  let list = loadLocalData();
+  const idx = list.findIndex(x => x.name === name);
+  if(idx >=0){
+    if(!isAllowVisit(list[idx].date, visitDate)){
+      showMsg("❌7天内已有来访，不能重复登记来访","error");
+      isCheckedOk = false;
+      lastCheckedName = "";
+      return;
+    }
+    list[idx].date = visitDate;
+  }else{
+    list.push({name, date: visitDate});
+  }
+  saveLocalData(list);
+  showMsg("✅来访登记成功","success");
 
-    if(!name){
-        resultDom.innerText = "请输入来访人姓名！";
-        return;
-    }
-    // 日期校验
-    const visitDate = new Date(dateStr);
-    if(isNaN(visitDate.getTime())){
-        resultDom.innerText = "日期格式错误！请使用 YYYY-MM-DD";
-        return;
-    }
-    const vDate = new Date(visitDate.getFullYear(), visitDate.getMonth(), visitDate.getDate());
+  isCheckedOk = false;
+  lastCheckedName = "";
+};
 
-    if(!records[name]){
-        lastCheckResult = {allow:true,name,dateStr};
-        resultDom.innerText = `【核验结果】${name} 无历史来访记录，可以来访。如需登记，请点击【登记本次来访】`;
-        return;
-    }
-    const lastDate = new Date(records[name]);
-    const lDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
-    const deltaDays = Math.round((vDate - lDate)/(1000*60*60*24));
+clearNameBtn.onclick = function(){
+  nameInput.value = "";
+  msgBox.innerText = "";
+  msgBox.className = "";
+  isCheckedOk = false;
+  lastCheckedName = "";
+};
 
-    // ===== 判定：间隔 >7天才允许来访 =====
-    if(deltaDays > 7){
-        lastCheckResult = {allow:true,name,dateStr};
-        resultDom.innerText = `【核验结果】可以来访。上次来访:${records[name]}，间隔${deltaDays}天，大于7天。如需登记，请点击【登记本次来访】`;
-    }else{
-        lastCheckResult = {allow:false,name,dateStr};
-        resultDom.innerText = `【核验结果】禁止来访！上次来访:${records[name]}，间隔${deltaDays}天，不大于7天，不可登记。`;
-    }
-}
+nameInput.oninput = function(){
+  isCheckedOk = false;
+  lastCheckedName = "";
+};
 
-// 【登记本次来访】只有核验允许时，才写入记录
-function saveVisit(){
-    const resultDom = document.getElementById("result");
-    if(!lastCheckResult || !lastCheckResult.allow){
-        resultDom.innerText = "不允许来访，不能执行登记！请先核验。";
-        return;
-    }
-    const {name, dateStr} = lastCheckResult;
-    const records = loadRecords();
-    records[name] = dateStr;
-    saveRecords(records);
-    resultDom.innerText = `✅登记成功！${name} 来访记录已保存`;
-    lastCheckResult = null; //清空核验缓存
-}
+delBtn.onclick = function(){
+  const name = nameInput.value.trim();
+  if(!name){
+    showMsg("请输入要删除的姓名","error");
+    return;
+  }
+  const pwd = prompt("请输入删除密码：");
+  if(pwd !== DEL_PASSWORD){
+    showMsg("密码错误，无法删除","error");
+    return;
+  }
+  let list = loadLocalData();
+  const oldLen = list.length;
+  list = list.filter(x => x.name !== name);
+  if(list.length === oldLen){
+    showMsg("没有找到该人员记录","error");
+    return;
+  }
+  saveLocalData(list);
+  showMsg("✅已删除该来访记录","success");
+  isCheckedOk = false;
+  lastCheckedName = "";
+};
 
-// ========== 删除指定人员来访记录（增加密码校验） ==========
-function deleteRecord(){
-    const name = document.getElementById("nameInput").value.trim();
-    const resultDom = document.getElementById("result");
-    if(!name){
-        resultDom.innerText = "请输入需要删除记录的姓名！";
-        return;
-    }
-    // 弹窗输入密码
-    const inputPwd = prompt("请输入删除权限密码：");
-    if(inputPwd === null){
-        resultDom.innerText = "已取消删除操作";
-        return;
-    }
-    if(inputPwd !== DELETE_PASSWORD){
-        resultDom.innerText = "❌密码错误，删除失败！";
-        return;
-    }
-    const records = loadRecords();
-    if(records.hasOwnProperty(name)){
-        delete records[name];
-        saveRecords(records);
-        resultDom.innerText = `✅已删除【${name}】的来访记录`;
-    }else{
-        resultDom.innerText = `❌未找到【${name}】的来访记录`;
-    }
-    lastCheckResult = null;
-}
+showListBtn.onclick = function(){
+  const list = loadLocalData();
+  recordListBox.innerHTML = "";
+  if(!list.length){
+    recordListBox.innerHTML = `<div style="text-align:center;color:#777;padding:24px">暂无来访记录</div>`;
+  }else{
+    list.slice().sort((a,b)=> safeDate(b.date) - safeDate(a.date)).forEach(item=>{
+      const div = document.createElement("div");
+      div.className = "record-item";
+      div.innerText = `👤${item.name}｜📅${item.date}`;
+      recordListBox.appendChild(div);
+    });
+  }
+  listMask.style.display = "flex";
+};
+closeListBtn.onclick = ()=> listMask.style.display = "none";
+listMask.onclick = e=>{
+  if(e.target === listMask) listMask.style.display = "none";
+};
 
-// 批量导入：读取txt文件
-function handleImport(fileInput){
-    const file = fileInput.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e){
-        const text = e.target.result;
-        const lines = text.split("\n");
-        const records = loadRecords();
-        let count=0,fail=0;
-        for(let line of lines){
-            line = line.trim();
-            if(!line) continue;
-            const arr = line.split("|");
-            if(arr.length!==2){fail++;continue;}
-            const n = arr[0].trim();
-            const d = arr[1].trim();
-            const dt = new Date(d);
-            if(isNaN(dt.getTime())){fail++;continue;}
-            records[n]=d;
-            count++;
-        }
-        saveRecords(records);
-        document.getElementById("result").innerText=`批量导入完成！成功${count}条，失败${fail}条`;
-    }
-    reader.readAsText(file);
-}
-
-// 批量导出：下载export.txt
-function batchExport(){
-    const records = loadRecords();
-    let txt = "姓名|上次来访日期\n";
-    for(let name in records){
-        txt += `${name}|${records[name]}\n`;
-    }
-    const blob = new Blob([txt],{type:"text/plain;charset=utf-8"});
+exportBtn.onclick = function(){
+  try{
+    const list = loadLocalData();
+    const jsonStr = JSON.stringify(list, null, 2);
+    const blob = new Blob([jsonStr], {type:"application/json;charset=utf-8"});
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = "export.txt";
+    a.download = `来访记录_${getTodayStr()}.json`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
-    document.getElementById("result").innerText="导出成功！export.txt 已开始下载";
-}
+    setTimeout(()=>{
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },300);
+    showMsg("✅已导出记录文件，请查看下载目录","success");
+  }catch(err){
+    try{
+      const list = loadLocalData();
+      const jsonStr = JSON.stringify(list, null, 2);
+      navigator.clipboard.writeText(jsonStr);
+      showMsg("⚠️当前环境无法直接下载，记录已复制到剪贴板，可以粘贴保存为 .json 文件","info");
+    }catch(e2){
+      showMsg("❌导出失败，该WebView环境不支持文件下载","error");
+    }
+  }
+};
+
+importBtn.onclick = function(){
+  fileInput.value = "";
+  fileInput.click();
+};
+
+fileInput.onchange = function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const incoming = JSON.parse(ev.target.result);
+      if(!Array.isArray(incoming)){
+        showMsg("❌文件格式不对，不是来访记录","error");
+        return;
+      }
+      // 校验数据格式
+      const valid = incoming.filter(r=>{
+        return r.name && r.date && /^\d{4}-\d{2}-\d{2}$/.test(r.date);
+      });
+      if(!valid.length){
+        showMsg("❌文件内没有合法来访记录","error");
+        return;
+      }
+      // 先清空本地，再完整替换
+      saveLocalData(valid);
+      showMsg(`✅导入完成，已用文件完整替换，共${valid.length}条记录`,"success");
+    }catch(err){
+      showMsg("❌读取文件失败，不是有效的JSON","error");
+    }
+    fileInput.value = "";
+  };
+  reader.readAsText(file);
+};
 </script>
 </body>
 </html>
